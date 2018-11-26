@@ -19,7 +19,6 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\test\input_cases\tcs_trough_physical_input.cpp" />
     <ClCompile Include="..\test\input_cases\weather_inputs.cpp" />
     <ClCompile Include="..\test\main.cpp" />
     <ClCompile Include="..\test\shared_test\lib_battery_dispatch_test.cpp" />
@@ -43,6 +42,7 @@
     <ClCompile Include="..\test\ssc_test\cmod_pvyield_test.cpp" />
     <ClCompile Include="..\test\ssc_test\cmod_swh_test.cpp" />
     <ClCompile Include="..\test\ssc_test\cmod_tcstrough_physical_test.cpp" />
+    <ClCompile Include="..\test\ssc_test\cmod_trough_physical_iph_test.cpp" />
     <ClCompile Include="..\test\ssc_test\cmod_windpower_test.cpp" />
     <ClCompile Include="..\test\ssc_test\cmod_windpower_test2.cpp" />
     <ClCompile Include="..\test\ssc_test\computeModuleTest.cpp" />
