@@ -2,7 +2,7 @@
 *  Copyright 2017 Alliance for Sustainable Energy, LLC
 *
 *  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  (ï¿½Allianceï¿½) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
 *  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
 *  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
 *  copies to the public, perform publicly and display publicly, and to permit others to do so.
@@ -26,8 +26,8 @@
 *  4. Redistribution of this software, without modification, must refer to the software by the same
 *  designation. Redistribution of a modified version of this software (i) may not refer to the modified
 *  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
-*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  the underlying software originally provided by Alliance as ï¿½System Advisor Modelï¿½ or ï¿½SAMï¿½. Except
+*  to comply with the foregoing, the terms ï¿½System Advisor Modelï¿½, ï¿½SAMï¿½, or any confusingly similar
 *  designation may not be used to refer to any modified version of this software or any modified
 *  version of the underlying software originally provided by Alliance without the prior written consent
 *  of Alliance.
@@ -49,12 +49,17 @@
 
 #include <memory>
 
-#include "lib_battery_powerflow.h"
 #include "lib_battery.h"
-#include "lib_utility_rate.h"
+
 
 #ifndef __LIB_BATTERY_DISPATCH_H__
 #define __LIB_BATTERY_DISPATCH_H__
+
+// Forward declarations to speed up build
+struct BatteryPower;
+class BatteryPowerFlow;
+class UtilityRate;
+class UtilityRateCalculator;
 
 namespace battery_dispatch
 {
@@ -113,37 +118,33 @@ public:
 	battery_t * battery_model(){ return _Battery; }
 
 	// ac outputs
-	double power_tofrom_battery() { return m_batteryPower->powerBattery; }
-	double power_tofrom_grid() { return m_batteryPower->powerGrid; }
-	double power_gen() { return m_batteryPower->powerGeneratedBySystem; }
-	double power_pv_to_load() { return m_batteryPower->powerPVToLoad; }
-	double power_battery_to_load() { return m_batteryPower->powerBatteryToLoad; }
-	double power_grid_to_load() { return m_batteryPower->powerGridToLoad; }
-	double power_pv_to_batt() { return m_batteryPower->powerPVToBattery; }
-	double power_grid_to_batt() { return m_batteryPower->powerGridToBattery; }
-	double power_pv_to_grid() { return m_batteryPower->powerPVToGrid; }
-	double power_battery_to_grid() { return m_batteryPower->powerBatteryToGrid; }
-	double power_conversion_loss() { return m_batteryPower->powerConversionLoss; }
-	double power_system_loss() { return m_batteryPower->powerSystemLoss; }
+	double power_tofrom_battery();
+	double power_tofrom_grid();
+	double power_gen();
+	double power_pv_to_load();
+	double power_battery_to_load();
+	double power_grid_to_load();
+	double power_pv_to_batt();
+	double power_grid_to_batt();
+	double power_pv_to_grid();
+	double power_battery_to_grid();
+	double power_conversion_loss();
+	double power_system_loss();
 
 	virtual double power_grid_target(){	return 0;}
 	virtual double power_batt_target(){ return 0.;}
 	virtual double cost_to_cycle() { return 0.;}
 
 	// control settings
-	double battery_power_to_fill(){ return _Battery->battery_power_to_fill(m_batteryPower->stateOfChargeMax); }
+	double battery_power_to_fill();
 
 	message get_messages();
 
 	/// Return a pointer to the underlying calculated power quantities
-	BatteryPower * getBatteryPower() {
-		return m_batteryPower;
-	};
+	BatteryPower * getBatteryPower();
 
 	/// Return a pointer to the object which calculates the battery power flow
-	BatteryPowerFlow * getBatteryPowerFlow() {
-		return m_batteryPowerFlow.get();
-	};
+	BatteryPowerFlow * getBatteryPowerFlow();
 
 protected:
 

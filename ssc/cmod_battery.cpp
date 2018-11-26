@@ -49,11 +49,13 @@
 
 #include <math.h>
 
+#include "cmod_battery.h"
 #include "common.h"
 #include "core.h"
 #include "lib_time.h"
 #include "lib_util.h"
-#include "cmod_battery.h"
+#include "lib_utility_rate.h"
+
 
 var_info vtab_battery_inputs[] = {
 	/*   VARTYPE           DATATYPE         NAME                                            LABEL                                                   UNITS      META                   GROUP           REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
