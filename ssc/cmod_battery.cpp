@@ -1312,9 +1312,10 @@ void battstor::process_messages(compute_module &cm)
 
 ///////////////////////////////////////////////////
 static var_info _cm_vtab_battery[] = {
-	/*   VARTYPE           DATATYPE         NAME                                            LABEL                                                   UNITS      META                           GROUP                  REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
-	{ SSC_INPUT,        SSC_NUMBER,      "system_use_lifetime_output",                 "Lifetime simulation",                                     "0/1",       "0=SingleYearRepeated,1=RunEveryYear",   "",        "?=0",                   "BOOLEAN",                          "" },
-	{ SSC_INPUT,        SSC_NUMBER,      "analysis_period",                            "Lifetime analysis period",                                "years",     "The number of years in the simulation", "",        "system_use_lifetime_output=1","",                           "" },
+	/*   VARTYPE           DATATYPE         NAME                                             LABEL                                                   UNITS      META                           GROUP                  REQUIRED_IF                 CONSTRAINTS                      UI_HINTS*/
+	{ SSC_INOUT,        SSC_NUMBER,      "percent_complete",                           "Estimated simulation status",                             "%",          "",                     "",                        "",                            "",                               "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "system_use_lifetime_output",                 "Lifetime simulation",                                     "0/1",       "0=SingleYearRepeated,1=RunEveryYear",   "",        "?=0",                   "BOOLEAN",                              "" },
+	{ SSC_INPUT,        SSC_NUMBER,      "analysis_period",                            "Lifetime analysis period",                                "years",     "The number of years in the simulation", "",        "system_use_lifetime_output=1","",                               "" },
 	{ SSC_INPUT,        SSC_NUMBER,      "en_batt",                                    "Enable battery storage model",                            "0/1",        "",                     "Battery",                      "?=0",                    "",                               "" },
 
 	// simulation inputs - required only if lifetime analysis
@@ -1402,6 +1403,17 @@ public:
 				size_t year_idx = 0; 
 				for (size_t hour = 0; hour < 8760; hour++)
 				{
+					// status bar
+					if (hour % (8760 / nStatusUpdates) == 0)
+					{
+						// assume that anyone using this module is chaining with two techs
+						float techs = 3;
+						percent = percent_complete + 100.0f * ((float)lifetime_idx + 1) / ((float)nrec_lifetime) / techs;
+						if (!update("", percent, (float)hour)) {
+							throw exec_error("battery", "simulation canceled at hour " + util::to_string(hour + 1.0));
+						}
+					}
+
 					for (size_t jj = 0; jj < batt.step_per_hour; jj++)
 					{
 						batt.initialize_time(year, hour, jj);
@@ -1421,6 +1433,7 @@ public:
 			// update capacity factor and annual energy
 			assign("capacity_factor", var_data(static_cast<ssc_number_t>(annual_energy * 100.0 / (nameplate_in * util::hours_per_year))));
 			assign("annual_energy", var_data(static_cast<ssc_number_t>(annual_energy)));
+			assign("percent_complete", var_data((ssc_number_t)percent));
 		}
 		else
 			assign("average_battery_roundtrip_efficiency", var_data((ssc_number_t)0.));
