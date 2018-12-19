@@ -2,7 +2,7 @@
 *  Copyright 2017 Alliance for Sustainable Energy, LLC
 *
 *  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  (ï¿½Allianceï¿½) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
 *  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
 *  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
 *  copies to the public, perform publicly and display publicly, and to permit others to do so.
@@ -26,8 +26,8 @@
 *  4. Redistribution of this software, without modification, must refer to the software by the same
 *  designation. Redistribution of a modified version of this software (i) may not refer to the modified
 *  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
-*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  the underlying software originally provided by Alliance as ï¿½System Advisor Modelï¿½ or ï¿½SAMï¿½. Except
+*  to comply with the foregoing, the terms ï¿½System Advisor Modelï¿½, ï¿½SAMï¿½, or any confusingly similar
 *  designation may not be used to refer to any modified version of this software or any modified
 *  version of the underlying software originally provided by Alliance without the prior written consent
 *  of Alliance.
@@ -1171,9 +1171,8 @@ public:
 				batt_rep = as_array("batt_replacement_schedule", &count); // replacements per year user-defined
 			double batt_cap = as_double("batt_computed_bank_capacity");
 			// updated 10/17/15 per 10/14/15 meeting
-//			escal_or_annual(CF_battery_replacement_cost_schedule, nyears, "batt_replacement_cost", inflation_rate, batt_cap, false, as_double("batt_replacement_cost_escal")*0.01);
-			double batt_repl_cost = as_double("batt_replacement_cost");
-			double batt_repl_cost_escal = as_double("batt_replacement_cost_escal")*0.01;
+			// updated 10/17/15 per 10/14/15 meeting
+			escal_or_annual(CF_battery_replacement_cost_schedule, nyears, "om_replacement_cost1", inflation_rate, batt_cap, false, as_double("om_replacement_cost_escal")*0.01);
 
 			for (int y = 0; y<nyears; y++)
 				cf.at(CF_battery_replacement_cost_schedule, y + 1) = batt_repl_cost * batt_cap * pow(1 + batt_repl_cost_escal + inflation_rate, y);
