@@ -1031,7 +1031,7 @@ void dispatch_automatic_behind_the_meter_t::sort_grid(FILE *p, bool debug, size_
 	{
 		for (size_t step = 0; step != _steps_per_hour; step++)
 		{
-			grid[count] = grid_point(_P_load_dc[idx] - _P_pv_dc[idx], hour, step);
+			grid[count] = grid_point(_P_load_dc[idx] - _P_pv_dc[idx], (int)hour, (int)step);
 			sorted_grid[count] = grid[count];
 
 			if (debug)

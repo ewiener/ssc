@@ -2,7 +2,7 @@
 *  Copyright 2017 Alliance for Sustainable Energy, LLC
 *
 *  NOTICE: This software was developed at least in part by Alliance for Sustainable Energy, LLC
-*  (“Alliance”) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
+*  (ï¿½Allianceï¿½) under Contract No. DE-AC36-08GO28308 with the U.S. Department of Energy and the U.S.
 *  The Government retains for itself and others acting on its behalf a nonexclusive, paid-up,
 *  irrevocable worldwide license in the software to reproduce, prepare derivative works, distribute
 *  copies to the public, perform publicly and display publicly, and to permit others to do so.
@@ -26,8 +26,8 @@
 *  4. Redistribution of this software, without modification, must refer to the software by the same
 *  designation. Redistribution of a modified version of this software (i) may not refer to the modified
 *  version by the same designation, or by any confusingly similar designation, and (ii) must refer to
-*  the underlying software originally provided by Alliance as “System Advisor Model” or “SAM”. Except
-*  to comply with the foregoing, the terms “System Advisor Model”, “SAM”, or any confusingly similar
+*  the underlying software originally provided by Alliance as ï¿½System Advisor Modelï¿½ or ï¿½SAMï¿½. Except
+*  to comply with the foregoing, the terms ï¿½System Advisor Modelï¿½, ï¿½SAMï¿½, or any confusingly similar
 *  designation may not be used to refer to any modified version of this software or any modified
 *  version of the underlying software originally provided by Alliance without the prior written consent
 *  of Alliance.
@@ -395,8 +395,8 @@ public:
 		if (as_integer("system_use_lifetime_output")==0)
 		{
 			double first_year_energy = 0.0;
-			for (int i = 0; i < 8760; i++) 
-				first_year_energy += hourly_energy_calcs.hourly_energy()[i];
+			for (int h = 0; h < 8760; h++) 
+				first_year_energy += hourly_energy_calcs.hourly_energy()[h];
 			for (int y = 1; y <= nyears; y++)
 				cf.at(CF_energy_net, y) = first_year_energy * cf.at(CF_degradation, y);
 		}
@@ -405,14 +405,14 @@ public:
 			for (int y = 1; y <= nyears; y++)
 			{
 				cf.at(CF_energy_net, y) = 0;
-				int i = 0;
+				int ind = 0;
 				for (int m = 0; m<12; m++)
 					for (int d = 0; d<util::nday[m]; d++)
 						for (int h = 0; h<24; h++)
-							if (i<8760)
+							if (ind<8760)
 							{
-					cf.at(CF_energy_net, y) += hourly_energy_calcs.hourly_energy()[(y - 1) * 8760 + i] * cf.at(CF_degradation, y);
-								i++;
+					cf.at(CF_energy_net, y) += hourly_energy_calcs.hourly_energy()[(y - 1) * 8760 + ind] * cf.at(CF_degradation, y);
+								ind++;
 							}
 			}
 
@@ -559,12 +559,12 @@ public:
 			double batt_repl_cost = as_double("batt_replacement_cost");
 			double batt_repl_cost_escal = as_double("batt_replacement_cost_escal")*0.01;
 
-			for (int i = 0; i<nyears; i++)
-				cf.at(CF_battery_replacement_cost_schedule, i + 1) = batt_repl_cost * batt_cap * pow(1 + batt_repl_cost_escal + inflation_rate, i);
+			for (int y = 0; y<nyears; y++)
+				cf.at(CF_battery_replacement_cost_schedule, y + 1) = batt_repl_cost * batt_cap * pow(1 + batt_repl_cost_escal + inflation_rate, y);
 
-			for (int i = 0; i < nyears && i<(int)count; i++)
-				cf.at(CF_battery_replacement_cost, i + 1) = batt_rep[i] * 
-					cf.at(CF_battery_replacement_cost_schedule, i + 1);
+			for (int y = 0; i < nyears && y<(int)count; y++)
+				cf.at(CF_battery_replacement_cost, y + 1) = batt_rep[y] * 
+					cf.at(CF_battery_replacement_cost_schedule, y + 1);
 		}
 
 		// fuelcell cost - replacement from lifetime analysis
@@ -1127,7 +1127,7 @@ public:
 
 
 // real estate value added 6/24/13
-		for (int i=1;i<nyears+1;i++)
+		for (int y=1;y<nyears+1;y++)
 		{
 			double rr = 1.0;
 			if (nom_discount_rate != -1.0) rr = 1.0/(1.0+nom_discount_rate);
