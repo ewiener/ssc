@@ -924,7 +924,6 @@ void dispatch_automatic_behind_the_meter_t::dispatch(size_t year,
 void dispatch_automatic_behind_the_meter_t::update_load_data(std::vector<double> P_load_dc){ _P_load_dc = P_load_dc; }
 void dispatch_automatic_behind_the_meter_t::set_target_power(std::vector<double> P_target){ _P_target_input = P_target; }
 double dispatch_automatic_behind_the_meter_t::power_grid_target() { return _P_target_current; };
-double dispatch_automatic_behind_the_meter_t::power_batt_target() { return m_batteryPower->powerBattery; };
 void dispatch_automatic_behind_the_meter_t::update_dispatch(size_t hour_of_year, size_t step, size_t idx)
 {
 	bool debug = false;
