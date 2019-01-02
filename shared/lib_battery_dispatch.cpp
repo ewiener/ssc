@@ -638,7 +638,8 @@ dispatch_automatic_t::dispatch_automatic_t(
 	double dispatch_update_frequency_hours,
 	bool can_charge,
 	bool can_clip_charge,
-	bool can_grid_charge
+	bool can_grid_charge,
+	bool can_fuelcell_charge
 	) : dispatch_t(Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max, Pd_max,
 	t_min, dispatch_mode, pv_dispatch)
 {
@@ -664,6 +665,7 @@ dispatch_automatic_t::dispatch_automatic_t(
 	m_batteryPower->canClipCharge = can_clip_charge;
 	m_batteryPower->canPVCharge = can_charge;
 	m_batteryPower->canGridCharge = can_grid_charge;
+	m_batteryPower->canFuelCellCharge = can_fuelcell_charge;
 	m_batteryPower->canDischarge = true;
 }
 
@@ -863,8 +865,9 @@ dispatch_automatic_behind_the_meter_t::dispatch_automatic_behind_the_meter_t(
 	double dispatch_update_frequency_hours,
 	bool can_charge,
 	bool can_clip_charge,
-	bool can_grid_charge
-	) : dispatch_automatic_t(Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max, Pd_max, t_min, dispatch_mode, pv_dispatch, nyears, look_ahead_hours, dispatch_update_frequency_hours, can_charge, can_clip_charge, can_grid_charge)
+	bool can_grid_charge,
+	bool can_fuelcell_charge
+	) : dispatch_automatic_t(Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max, Pd_max, t_min, dispatch_mode, pv_dispatch, nyears, look_ahead_hours, dispatch_update_frequency_hours, can_charge, can_clip_charge, can_grid_charge, can_fuelcell_charge)
 {
 	_P_target_month = -1e16;
 	_P_target_current = -1e16;
@@ -1240,6 +1243,7 @@ dispatch_automatic_front_of_meter_t::dispatch_automatic_front_of_meter_t(
 	bool can_charge,
 	bool can_clip_charge,
 	bool can_grid_charge,
+	bool can_fuelcell_charge,
 	double inverter_paco,
 	double batt_cost_per_kwh,
 	int battCycleCostChoice,
@@ -1250,7 +1254,7 @@ dispatch_automatic_front_of_meter_t::dispatch_automatic_front_of_meter_t(
 	UtilityRate * utilityRate,
 	double etaPVCharge,
 	double etaGridCharge,
-	double etaDischarge) : dispatch_automatic_t(Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max, Pd_max, t_min, dispatch_mode, pv_dispatch, nyears, look_ahead_hours, dispatch_update_frequency_hours, can_charge, can_clip_charge, can_grid_charge)
+	double etaDischarge) : dispatch_automatic_t(Battery, dt_hour, SOC_min, SOC_max, current_choice, Ic_max, Id_max, Pc_max, Pd_max, t_min, dispatch_mode, pv_dispatch, nyears, look_ahead_hours, dispatch_update_frequency_hours, can_charge, can_clip_charge, can_grid_charge, can_fuelcell_charge)
 {
 	// if look behind, only allow 24 hours
 	if (_mode == dispatch_t::FOM_LOOK_BEHIND)
