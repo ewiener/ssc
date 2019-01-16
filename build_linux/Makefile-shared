@@ -1,10 +1,11 @@
 VPATH = ../shared
 CC = gcc
 CXX = g++
-WARNINGS = -Wall -Werror -Wno-strict-aliasing -Wno-deprecated-declarations
+WARNINGS = -Wall -Werror -Wno-strict-aliasing -Wno-deprecated-declarations -Wno-unknown-pragmas
 CFLAGS =-I../ssc -I../shared -I../splinter $(WARNINGS) -g -O3 -D__64BIT__ -fPIC
 CXXFLAGS=-std=c++0x $(CFLAGS)
 
+CXXSRC = $(wildcard ../shared/*.cpp)
 
 OBJECTS = \
 	lsqfit.o \
@@ -44,11 +45,10 @@ OBJECTS = \
 	lib_time.o \
 	lib_ondinv.o
 
-
 TARGET=shared.a
 
 $(TARGET):$(OBJECTS)
-	ar rs $(TARGET) $(OBJECTS)
+	ar -rs $(TARGET) $(OBJECTS)
 
 clean:
 	rm -rf $(TARGET) $(OBJECTS)
