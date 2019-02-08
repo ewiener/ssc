@@ -3271,9 +3271,6 @@ calc_final_metrics_goto:
                 m_dot_field_htf = m_dot_htf_tot;
                 //m_dot_field_htf = 0;
 			}
-            else {
-                recirculating = false;
-            }
 		}
 		else
 		{
