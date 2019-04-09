@@ -174,9 +174,24 @@ bool dispatch_t::check_constraints(double &I, size_t count)
 	}
 	// Don't allow battery to discharge if it gets wasted due to inverter efficiency limitations
 	// Typically, this would be due to low power flow, so just cut off battery.
-	else if (m_batteryPower->connectionMode == dispatch_t::DC_CONNECTED && m_batteryPower->sharedInverter->efficiencyAC < 70)
+	else if (m_batteryPower->connectionMode == dispatch_t::DC_CONNECTED && m_batteryPower->sharedInverter->efficiencyAC < 90)
 	{
-		I = 0;
+		// The requested DC power
+		double powerBatterykWdc = _Battery->capacity_model()->I() * _Battery->battery_voltage() * util::watt_to_kilowatt;
+
+		// if battery discharging, see if can back off to get higher efficiency
+		if (m_batteryPower->powerBattery > 0) {
+			if (powerBatterykWdc + m_batteryPower->powerPV > m_batteryPower->sharedInverter->getACNameplateCapacitykW()) {
+				powerBatterykWdc = m_batteryPower->sharedInverter->getACNameplateCapacitykW() - m_batteryPower->powerPV;
+				powerBatterykWdc = fmax(powerBatterykWdc, 0);
+			}
+			I = powerBatterykWdc * util::kilowatt_to_watt / _Battery->battery_voltage();
+		}
+		// if charging, simply cut off.
+		else {
+			I = 0;
+		}
+
 	}
 	else
 		iterate = false;
@@ -1184,8 +1199,29 @@ void dispatch_automatic_behind_the_meter_t::target_power(FILE*p, bool debug, dou
 
 void dispatch_automatic_behind_the_meter_t::set_battery_power(FILE *p, bool debug)
 {
-	for (size_t i = 0; i != _P_target_use.size(); i++)
+	for (size_t i = 0; i != _P_target_use.size(); i++) {
 		_P_battery_use[i] = grid[i].Grid() - _P_target_use[i];
+
+		// At this point the target power is expressed in AC, must convert to DC for battery
+		if (m_batteryPower->connectionMode == m_batteryPower->AC_CONNECTED) {
+			if (_P_battery_use[i] > 0) {
+				_P_battery_use[i] /= m_batteryPower->singlePointEfficiencyDCToAC;
+			}
+			else {
+				_P_battery_use[i] *= m_batteryPower->singlePointEfficiencyACToDC;
+			}
+		}
+		// DC-connected is harder to convert to AC, must make assumptions about inverter efficiency and charge shource
+		else {
+			if (_P_battery_use[i] > 0) {
+				_P_battery_use[i] /= (m_batteryPower->singlePointEfficiencyDCToDC * m_batteryPower->singlePointEfficiencyACToDC);
+			}
+			// Assuming just charging from PV not grid
+			else {
+				_P_battery_use[i] *= m_batteryPower->singlePointEfficiencyDCToDC;
+			}
+		}
+	}
 
 	if (debug)
 	{

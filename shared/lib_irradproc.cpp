@@ -219,28 +219,38 @@ void solarpos(int year,int month,int day,int hour,double minute,double lat,doubl
 		E = E - 24.0;
 
 	arg = -tan(lat)*tan(dec);
-	if( arg >= 1.0 )
-		ws = 0.0;                         /* No sunrise, continuous nights */
-	else if( arg <= -1.0 )
-		ws = M_PI;                          /* No sunset, continuous days */
+	if (arg >= 1.0)  // No sunrise, continuous nights
+	{
+		ws = 0.0;                        
+		sunrise = 100.0; //make sunrise and sunset sufficiently large that even if they get rolled by 24 hours, they're still out of the bounds 0-24
+		sunset = -100.0;
+	}
+	else if (arg <= -1.0) // No sunset, continuous days
+	{
+		ws = M_PI;                          
+		sunrise = -100.0; //make sunrise and sunset sufficiently large that even if they get rolled by 24 hours, they're still out of the bounds 0-24
+		sunset = 100.0;
+	}
 	else
-		ws = acos(arg);                   /* Sunrise hour angle in radians */
-
-	/* Sunrise and sunset in local standard time */
-	sunrise = 12.0 - (ws / DTOR) / 15.0 - (lng / 15.0 - tz) - E; //sunrise in units of hours (e.g. 5.25 = 5:15 am)
-	sunset = 12.0 + (ws / DTOR) / 15.0 - (lng / 15.0 - tz) - E; //sunset in units of hours (e.g. 18.75 = 6:45 pm)
-
-	/* bug fix jmf 1/31/18: the sunrise and sunset algorithms use the common longitude convention (negative longitude is west to -180 deg,
-	positive is east to 180 deg) and time zone convention (positive east, negative west). Duffie & Beckman define the longitude (and therefore
-	time zone) convention as degrees WEST of standard meridian, from 0-360. The algorithms below work fine when both longitude and time zone
-	are positive, or when both are negative. However, there are a few places near the international dateline that have positive time zones (+13)
-	and negative longitudes. There are potentially locations with the reverse. Using these equations as-is cause the sunrise and sunset calculations
-	to be shifted by 24 hours in one direction or the other. Therefore, shift sunrises/sunsets outside of 0 < time < 24 in order for subsequent
-	portions of the code to work correctly. Reference "Solar Engineering of Thermal Processes" Version 3, Duffie & Beckman, pages 17-19*/
-	if (sunrise > 24) sunrise -= 24; //this could be a "while" loop, but hard to figure out when there would be an instance where it was >48, might want it to return a bogus number for error identification
-	if (sunset > 24) sunset -= 24;
-	if (sunrise < 0) sunrise += 24;
-	if (sunset < 0) sunset += 24;
+	{
+		ws = acos(arg); // Sunrise hour angle in radians
+		// Sunrise and sunset in local standard time
+		sunrise = 12.0 - (ws / DTOR) / 15.0 - (lng / 15.0 - tz) - E; //sunrise in units of hours (e.g. 5.25 = 5:15 am)
+		sunset = 12.0 + (ws / DTOR) / 15.0 - (lng / 15.0 - tz) - E; //sunset in units of hours (e.g. 18.75 = 6:45 pm)
+		//now a bunch of error checks to try to correctly catch weird behavior
+		//both sunrise and sunset may be shifted by 24 hours (example: Fiji- positive tz negative lng), if so, roll them both back
+		if (sunrise > 24.0 && sunset > 24.0)
+		{
+			sunrise -= 24.0;
+			sunset -= 24.0;
+		}
+		//no examples of the opposing case, but let's catch it anyways, just in case
+		if (sunrise < 0.0 && sunset < 0.0)
+		{
+			sunrise += 24.0;
+			sunset += 24.0;
+		}
+	}
 
 	Eo = 1.00014 - 0.01671*cos(mnanom) - 0.00014*cos(2.0*mnanom);  /* Earth-sun distance (AU) */
 	Eo = 1.0/(Eo*Eo);                    /* Eccentricity correction factor */
@@ -1087,12 +1097,44 @@ int irrad::calc()
 	double t_sunrise = sunAnglesRadians[4];
 	double t_sunset = sunAnglesRadians[5];
 
-	// recall: if delt <= 0.0, do not interpolate sunrise and sunset hours, just use specified time stamp
-	if ( delt > 0
-		&& t_cur >= t_sunrise - delt/2.0
-		&& t_cur < t_sunrise + delt/2.0 )
+	if (t_sunset > 24.0 && t_sunset != 100.0) //sunset is legitimately the next day but we're not in endless days, so recalculate sunset from the previous day
 	{
-		// time step encompasses the sunrise
+		double sunanglestemp[9];
+		if (day > 1) //simply decrement day during month
+			solarpos(year, month, day - 1, 12, 0.0, latitudeDegrees, longitudeDegrees, timezone, sunanglestemp);
+		else if (month > 1) //on the 1st of the month, need to switch to the last day of previous month
+			solarpos(year, month - 1, __nday[month - 2], 12, 0.0, latitudeDegrees, longitudeDegrees, timezone, sunanglestemp); //month is 1-indexed and __nday is 0 indexed
+		else //on the first day of the year, need to switch to Dec 31 of last year
+			solarpos(year - 1, 12, 31, 12, 0.0, latitudeDegrees, longitudeDegrees, timezone, sunanglestemp);
+		//on the last day of endless days, sunset is returned as 100 (hour angle too large for calculation), so use today's sunset time as a proxy
+		if (sunanglestemp[5] == 100.0)
+			t_sunset -= 24.0;		
+		//if sunset from yesterday WASN'T today, then it's ok to leave sunset > 24, which will cause the sun to rise today and not set today
+		else if (sunanglestemp[5] >= 24.0)
+			t_sunset = sunanglestemp[5] - 24.0;
+	}
+
+	if (t_sunrise < 0.0 && t_sunrise != -100.0) //sunrise is legitimately the previous day but we're not in endless days, so recalculate for next day
+	{
+		double sunanglestemp[9];
+		if (day < __nday[month - 1]) //simply increment the day during the month, month is 1-indexed and __nday is 0-indexed
+			solarpos(year, month, day + 1, 12, 0.0, latitudeDegrees, longitudeDegrees, timezone, sunanglestemp);
+		else if (month < 12) //on the last day of the month, need to switch to the first day of the next month
+			solarpos(year, month + 1, 1, 12, 0.0, latitudeDegrees, longitudeDegrees, timezone, sunanglestemp);
+		else //on the last day of the year, need to switch to Jan 1 of the next year
+			solarpos(year + 1, 1, 1, 12, 0.0, latitudeDegrees, longitudeDegrees, timezone, sunanglestemp);
+		//on the last day of endless days, sunrise would be returned as -100 (hour angle too large for calculations), so use today's sunrise time as a proxy
+		if (sunanglestemp[4] == -100.0)
+			t_sunrise += 24.0;		
+		//if sunrise from tomorrow isn't today, then it's ok to leave sunrise < 0, which will cause the sun to set at the right time and not rise until tomorrow
+		else if (sunanglestemp[4] < 0.0)
+			t_sunrise = sunanglestemp[4] + 24.0;
+	}
+
+	// recall: if delt <= 0.0, do not interpolate sunrise and sunset hours, just use specified time stamp
+	// time step encompasses the sunrise
+	if ( delt > 0 && t_cur >= t_sunrise - delt/2.0 && t_cur < t_sunrise + delt/2.0 )
+	{
 		double t_calc = (t_sunrise + (t_cur+delt/2.0))/2.0; // midpoint of sunrise and end of timestep
 		int hr_calc = (int)t_calc;
 		double min_calc = (t_calc-hr_calc)*60.0;
@@ -1104,11 +1146,9 @@ int irrad::calc()
 
 		timeStepSunPosition[2] = 2;				
 	}
-	else if ( delt > 0
-		&& t_cur > t_sunset - delt/2.0
-		&& t_cur <= t_sunset + delt/2.0 )
+	// timestep encompasses the sunset
+	else if ( delt > 0 && t_cur > t_sunset - delt/2.0 && t_cur <= t_sunset + delt/2.0 )
 	{
-		// timestep encompasses the sunset
 		double t_calc = ( (t_cur-delt/2.0) + t_sunset )/2.0; // midpoint of beginning of timestep and sunset
 		int hr_calc = (int)t_calc;
 		double min_calc = (t_calc-hr_calc)*60.0;
@@ -1120,9 +1160,10 @@ int irrad::calc()
 
 		timeStepSunPosition[2] = 3;
 	}
-	else if (t_cur >= t_sunrise && t_cur <= t_sunset)
-	{
-		// timestep is not sunrise nor sunset, but sun is up  (calculate position at provided t_cur)			
+	// timestep is not sunrise nor sunset, but sun is up  (calculate position at provided t_cur)
+	else if ( (t_sunrise < t_sunset && t_cur >= t_sunrise && t_cur <= t_sunset) || //this captures normal daylight cases
+		(t_sunrise > t_sunset && (t_cur <= t_sunset || t_cur >= t_sunrise)) ) //this captures cases where sunset (from previous day) is 1:30AM, sunrise 2:30AM, in arctic circle
+	{				
 		timeStepSunPosition[0] = hour;
 		timeStepSunPosition[1] = (int)minute;
 		solarpos( year, month, day, hour, minute, latitudeDegrees, longitudeDegrees, timezone, sunAnglesRadians );
@@ -1131,11 +1172,9 @@ int irrad::calc()
 	else
 	{	
 		// sun is down, assign sundown values
-		sunAnglesRadians[0] = -999*DTOR; //avoid returning a junk azimuth angle (return in radians)
-		sunAnglesRadians[1] = -999*DTOR; //avoid returning a junk zenith angle (return in radians)
-		sunAnglesRadians[2] = -999*DTOR; //avoid returning a junk elevation angle (return in radians)
-		timeStepSunPosition[0] = 0;
-		timeStepSunPosition[1] = 0;
+		solarpos(year, month, day, hour, minute, latitudeDegrees, longitudeDegrees, timezone, sunAnglesRadians);
+		timeStepSunPosition[0] = hour;
+		timeStepSunPosition[1] = (int)minute;
 		timeStepSunPosition[2] = 0;
 	}
 
