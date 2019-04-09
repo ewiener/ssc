@@ -476,7 +476,6 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 			}
 
 			// Common to automated methods
-			batt_vars->batt_dispatch_auto_can_gridcharge = false;
 			batt_vars->batt_dispatch_auto_can_charge = true;
 			batt_vars->batt_dispatch_auto_can_clipcharge = true;
 			batt_vars->batt_dispatch_auto_can_gridcharge = false;
@@ -491,7 +490,10 @@ battstor::battstor(compute_module &cm, bool setup_model, size_t nrec, double dt_
 			if (cm.is_assigned("batt_dispatch_auto_can_clipcharge")) {
 				batt_vars->batt_dispatch_auto_can_clipcharge = cm.as_boolean("batt_dispatch_auto_can_clipcharge");
 			}
-			
+			if (cm.is_assigned("batt_dispatch_auto_can_fuelcellcharge")) {
+				batt_vars->batt_dispatch_auto_can_fuelcellcharge = cm.as_boolean("batt_dispatch_auto_can_fuelcellcharge");
+			}
+
 			// Battery bank replacement
 			batt_vars->batt_cost_per_kwh = cm.as_vector_double("om_replacement_cost1")[0];
 			batt_vars->batt_replacement_option = cm.as_integer("batt_replacement_option");

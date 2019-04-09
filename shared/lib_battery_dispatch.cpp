@@ -749,49 +749,49 @@ bool dispatch_automatic_t::check_constraints(double &I, size_t count)
 			double dSOC = 100 * dQ / _Battery->battery_charge_maximum();
 			double SOC = _Battery->battery_soc();
 
-
+			
 			// Case 1: Charging, need to increase charging to meet target (P_battery < 0, dP > 0)
-			if (P_battery <= 0 && dP > 0) {
-				// Don't charge more if can't grid charge (assumes PV and fuel cell have met max possible)
-				if (!m_batteryPower->canGridCharge) {
-					iterate = false;
-				}
-				// Don't charge more if battery is already close to full
-				if (SOC > m_batteryPower->stateOfChargeMax - tolerance) {
-					iterate = false;
-				}
-				// Don't charge more if would violate current or power charge limits
-				if (I > m_batteryPower->currentChargeMax - tolerance || fabs(P_battery) > m_batteryPower->powerBatteryChargeMax - tolerance) {
-					iterate = false;
-				}
+			 if (P_battery <= 0 && dP > 0) {
+				 // Don't charge more if can't grid charge (assumes PV and fuel cell have met max possible)
+				 if (!m_batteryPower->canGridCharge) {
+					 iterate = false;
+				 }
+				 // Don't charge more if battery is already close to full
+				 if (SOC > m_batteryPower->stateOfChargeMax - tolerance) {
+					 iterate = false;
+				 }
+				 // Don't charge more if would violate current or power charge limits
+				 if (I > m_batteryPower->currentChargeMax - tolerance || fabs(P_battery) > m_batteryPower->powerBatteryChargeMax - tolerance) {
+					 iterate = false;
+				 }
 			}
 			// Case 2: Discharging, need to increase discharge to meet target (P_battery > 0, dP < 0)
 			else if (P_battery >= 0 && dP < 0) {
-				// Don't discharge more if already near min SOC
-				if (SOC < m_batteryPower->stateOfChargeMin + tolerance) {
-					iterate = false;
-				}
-				// Don't discharge more if would violate current or power discharge limits
-				if (I > m_batteryPower->currentDischargeMax - tolerance || P_battery > m_batteryPower->powerBatteryDischargeMax - tolerance) {
-					iterate = false;
-				}
-			}
-			// Otherwise safe, (decreasing charging, decreasing discharging)
+				 // Don't discharge more if already near min SOC
+				 if (SOC < m_batteryPower->stateOfChargeMin + tolerance) {
+					 iterate = false;
+				 }
+				 // Don't discharge more if would violate current or power discharge limits
+				 if (I > m_batteryPower->currentDischargeMax - tolerance || P_battery > m_batteryPower->powerBatteryDischargeMax - tolerance) {
+					 iterate = false;
+				 }
+			 }
+			 // Otherwise safe, (decreasing charging, decreasing discharging)
 
-			if (iterate) {
+			 if (iterate){
 
-				double dI = dP * util::kilowatt_to_watt / _Battery->battery_voltage();
-				if (SOC + dSOC > m_batteryPower->stateOfChargeMax + tolerance) {
-					double dSOC_use = (m_batteryPower->stateOfChargeMax - SOC);
-					double dQ_use = dSOC_use * 0.01 * _Battery->battery_charge_maximum();
-					dI = dQ_use / _dt_hour;
-				}
-				else if (SOC + dSOC < m_batteryPower->stateOfChargeMin - tolerance) {
-					double dSOC_use = (m_batteryPower->stateOfChargeMin - SOC);
-					double dQ_use = dSOC_use * 0.01 * _Battery->battery_charge_maximum();
-					dI = dQ_use / _dt_hour;
-				}
-				I -= dI;
+					double dI = dP * util::kilowatt_to_watt / _Battery->battery_voltage();
+					if (SOC + dSOC > m_batteryPower->stateOfChargeMax + tolerance) {
+						double dSOC_use = (m_batteryPower->stateOfChargeMax - SOC);
+						double dQ_use = dSOC_use * 0.01 * _Battery->battery_charge_maximum();
+						dI = dQ_use / _dt_hour;
+					}
+					else if ( SOC + dSOC < m_batteryPower->stateOfChargeMin -tolerance) {
+						double dSOC_use = (m_batteryPower->stateOfChargeMin - SOC) ;
+						double dQ_use = dSOC_use * 0.01 * _Battery->battery_charge_maximum();
+						dI = dQ_use / _dt_hour;
+					}
+					I -= dI;		
 			}
 		}
 		// Behind the meter
@@ -1416,8 +1416,7 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 			else
 			{
 				// Always Charge if PV is clipping 
-				if (m_batteryPower->canClipCharge && m_batteryPower->powerPVClipped > 0 && benefitToClipCharge > m_cycleCost && m_batteryPower->powerPVClipped > 0)
-				{
+				if (m_batteryPower->canClipCharge && m_batteryPower->powerPVClipped > 0 && benefitToClipCharge > m_cycleCost && m_batteryPower->powerPVClipped > 0){
 					powerBattery = -m_batteryPower->powerPVClipped;
 				}
 
@@ -1442,7 +1441,12 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 					// otherwise, don't reserve capacity for clipping
 					else
 						powerBattery = -m_batteryPower->powerPV;
+					// otherwise, don't reserve capacity for clipping
+					else {
+						powerBattery = -m_batteryPower->powerPV;
+					}
 				}
+			}
 
 				// Also charge from grid if it is valuable to do so, still leaving EnergyToStoreClipped capacity in battery
 				if (m_batteryPower->canGridCharge && benefitToGridCharge > m_cycleCost && benefitToGridCharge > 0 && energyNeededToFillBattery > 0)
@@ -1465,9 +1469,8 @@ void dispatch_automatic_front_of_meter_t::update_dispatch(size_t hour_of_year, s
 			if (highValuePeriod && excessAcCapacity && batteryHasDischargeCapacity) {
 				if (m_batteryPower->connectionMode == BatteryPower::DC_CONNECTED) {
 					powerBattery = _inverter_paco - m_batteryPower->powerPV;
-				}
 				else {
-					powerBattery = _inverter_paco;
+					powerBattery = -energyNeededToFillBattery / _dt_hour;
 				}
 			}
 		}

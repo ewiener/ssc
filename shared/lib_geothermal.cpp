@@ -704,7 +704,7 @@ private:
 
 	// weather file opening, reading, checking inputs, etc.
 	bool OpenWeatherFile(const char * fn);
-	bool ReadWeatherForTimeStep(const bool bHourly, unsigned int timeStep);
+	bool ReadWeatherForTimeStep(const bool bHourly, size_t timeStep);
 	bool ReadNextLineInWeatherFile(void);
 	bool determineMakeupAlgorithm(void);
 	bool inputErrorsForUICalculations(void);
@@ -1269,12 +1269,12 @@ double CGeothermalAnalyzer::GetPlantBrineEffectiveness(void)
 	*/
 	double TSiO2 = -(0.0000001334837*pow(GetTemperaturePlantDesignC() , 4)) + (0.0000706584462*pow(GetTemperaturePlantDesignC() , 3)) - (0.0036294799613*pow(GetTemperaturePlantDesignC() , 2 )) + (0.3672417729236*GetTemperaturePlantDesignC()) + 4.205944351495;
 	double TamphSiO2 = (0.0000000000249634* pow(TSiO2 , 4)) - (0.00000000425191 * pow(TSiO2, 3)) - (0.000119669*pow(TSiO2 , 2)) + (0.307616*TSiO2) - 0.294394;
-//	double dTemperatureGFExitF = physics::CelciusToFarenheit(TamphSiO2); //109.31
+	// double dTemperatureGFExitF = physics::CelciusToFarenheit(TamphSiO2); //109.31
 	double dAE_At_Exit = GetAEAtTemp(TamphSiO2);
 
 
 	// GETEM's "optimizer" seems to pick the max possible brine effectiveness for the default binary plant, so use this as a proxy for now
-//	double dAEMaxPossible = (geothermal::IMITATE_GETEM) ? GetAEBinary() -  GetAEBinaryAtTemp(TamphSiO2) : GetAE() - dAE_At_Exit; // watt-hr/lb - [10B.GeoFluid].H54 "maximum possible available energy accounting for the available energy lost due to a silica constraint on outlet temperature"
+	// double dAEMaxPossible = (geothermal::IMITATE_GETEM) ? GetAEBinary() -  GetAEBinaryAtTemp(TamphSiO2) : GetAE() - dAE_At_Exit; // watt-hr/lb - [10B.GeoFluid].H54 "maximum possible available energy accounting for the available energy lost due to a silica constraint on outlet temperature"
 	mp_geo_out->max_secondlaw = (1 - ((geothermal::IMITATE_GETEM) ? GetAEBinaryAtTemp(TamphSiO2) / GetAEBinary() : dAE_At_Exit / GetAE()) - 0.375);
 	double dMaxBinaryBrineEffectiveness = ((geothermal::IMITATE_GETEM) ? GetAEBinary() : GetAE()) * ((GetTemperaturePlantDesignC() < 150) ? 0.14425 * exp(0.008806 * GetTemperaturePlantDesignC()) : mp_geo_out->max_secondlaw );
 	
@@ -1642,7 +1642,7 @@ bool CGeothermalAnalyzer::OpenWeatherFile(const char * fn)
 	return mb_WeatherFileOpen;
 }
 
-bool CGeothermalAnalyzer::ReadWeatherForTimeStep(bool bHourly, unsigned int timeStep)
+bool CGeothermalAnalyzer::ReadWeatherForTimeStep(bool bHourly, size_t timeStep)
 // Read one line in weather file for hourly analysis, or calculate the average values for a month for monthly analysis
 {	
 	// if this is an hourly analysis, just ignore the time step and get the data from the next line in the weather file
@@ -1817,12 +1817,12 @@ bool CGeothermalAnalyzer::RunAnalysis( bool (*update_function)(float, void*), vo
 
 	// Go through time step (hours or months) one by one
 //    bool bReDrill = false;
-	unsigned int iElapsedMonths = 0, iElapsedTimeSteps = 0, iEvaluationsInMonth = 0, iElapsedHours=0;
+	size_t iElapsedMonths = 0, iElapsedTimeSteps = 0, iEvaluationsInMonth = 0, iElapsedHours=0;
 	float fMonthlyPowerTotal;
-	for (unsigned int year = 0;  year < mo_geo_in.mi_ProjectLifeYears;  year++)
+	for (size_t year = 0;  year < mo_geo_in.mi_ProjectLifeYears;  year++)
 	{
 		mp_geo_out->maf_ReplacementsByYear[year] = 0;
-		for (unsigned int month=1; month<13; month++)
+		for (size_t month=1; month<13; month++)
 		{
 			fPercentDone = (float)iElapsedMonths/(float)(12*mo_geo_in.mi_ProjectLifeYears) * 100.0f;
 
@@ -1836,7 +1836,7 @@ bool CGeothermalAnalyzer::RunAnalysis( bool (*update_function)(float, void*), vo
 			}
 
 			fMonthlyPowerTotal = 0;
-			for (unsigned int hour=0; hour < (unsigned int)util::hours_in_month(month); hour++)
+			for (size_t hour=0; hour < util::hours_in_month(month); hour++)
 			{
 				if (IsHourly() || (hour == 0))
 				{

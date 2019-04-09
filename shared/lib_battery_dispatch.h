@@ -49,6 +49,7 @@
 
 #include <memory>
 
+
 #include "lib_battery.h"
 
 
@@ -479,8 +480,8 @@ public:
 	/*! Pass in the grid power target vector */
 	void set_target_power(std::vector<double> P_target);
 
-	/*! Target power outputs */
-	double power_grid_target(){ return _P_target_current; };
+	/*! Grid target power */
+	double power_grid_target();
 
 	enum BTM_TARGET_MODES {TARGET_SINGLE_MONTHLY, TARGET_TIME_SERIES};
 
