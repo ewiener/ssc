@@ -75,6 +75,7 @@ OBJECTS = tcskernel.o \
 	typelib.o \
 	waterprop.o \
 	weatherreader_csp_solver.o \
+	csp_radiator.o \
 	csp_solver_weatherreader.o \
 	csp_solver_util.o \
 	csp_solver_two_tank_tes.o \
@@ -94,6 +95,7 @@ OBJECTS = tcskernel.o \
 	csp_solver_mono_eq_methods.o \
 	csp_system_costs.o \
 	csp_solver_pt_sf_perf_interp.o \
+	csp_solver_stratified_tes.o \
 	ud_power_cycle.o \
 	csp_dispatch.o 
 
